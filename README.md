@@ -15,7 +15,7 @@
 **No admin. No install. Just paste in PowerShell and press Enter:**
 
 ```powershell
-irm https://raw.githubusercontent.com/hazemezz123/WinCleaner/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/hazemezz123/WinCleaner/master/install.ps1 | iex
 ```
 
 That’s it. You’ll see `Loading CleanSweep…` → TUI opens.
@@ -66,7 +66,7 @@ Invoke-WebRequest -Uri https://github.com/hazemezz123/WinCleaner/releases/latest
 
 **Option A — One-liner (recommended):**
 ```powershell
-irm https://raw.githubusercontent.com/hazemezz123/WinCleaner/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/hazemezz123/WinCleaner/master/install.ps1 | iex
 ```
 
 **Option B — Build from source:**

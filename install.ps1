@@ -4,7 +4,7 @@
 .DESCRIPTION
     Downloads (if needed) and launches the WinCleaner (CleanSweep) TUI.
     Usage:
-        irm https://raw.githubusercontent.com/hazemezz123/WinCleaner/main/install.ps1 | iex
+        irm https://raw.githubusercontent.com/hazemezz123/WinCleaner/master/install.ps1 | iex
         # or locally:
         powershell -ExecutionPolicy Bypass -File install.ps1
 .NOTES
