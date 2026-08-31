@@ -1,5 +1,6 @@
 pub mod categories;
 pub mod cleaner;
+pub mod config;
 pub mod disk;
 pub mod engine;
 
