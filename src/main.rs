@@ -34,7 +34,8 @@ fn main() -> anyhow::Result<()> {
     if args.dry_run {
         println!("CleanSweep v0.1.0 — dry run scan (no files will be deleted)");
         println!("Scanning safe categories (TEMP, Browser Cache, Windows Temp, Logs, Recycle, Update)…\n");
-        let cats = scanner::get_categories();
+        let config = scanner::config::CleanerConfig::load();
+        let cats: Vec<_> = scanner::get_categories().into_iter().filter(|c| config.is_enabled(&c.id)).collect();
         let report = scanner::engine::scan_all_sync(cats);
         println!("────────────────────────────────────────");
         println!(" Total recoverable: {} in {} files ({:.2}s)", scanner::format_bytes(report.total_size), report.total_files, report.duration.as_secs_f64());

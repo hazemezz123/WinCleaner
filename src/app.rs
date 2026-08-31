@@ -4,7 +4,7 @@ use std::sync::mpsc::{channel, Receiver, Sender};
 use chrono::Local;
 
 use crate::scanner::{
-    cleaner::{CleanEvent, CleanResult}, disk::{get_disk_info, DiskInfo, format_bytes}, engine::{ScanEvent, ScanReport}, get_categories as get_cats
+    cleaner::{CleanEvent, CleanResult}, config::CleanerConfig, disk::{get_disk_info, DiskInfo, format_bytes}, engine::{ScanEvent, ScanReport}, get_categories as get_cats, history::{append_history, load_history, HistoryEntry}
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -82,10 +82,15 @@ pub struct App {
     // Focus navigation
     pub dashboard_focus: usize,
     pub review_focus_is_list: bool, // true = list focused, false = actions focused if we had actions bar in review
+
+    pub config: CleanerConfig,
+    pub history: Vec<HistoryEntry>,
 }
 
 impl App {
     pub fn new() -> Self {
+        let config = CleanerConfig::load();
+        let history = load_history(&HistoryEntry::history_path()).unwrap_or_default();
         Self {
             screen: Screen::Dashboard,
             disk: get_disk_info(),
@@ -110,6 +115,8 @@ impl App {
             tick: 0,
             dashboard_focus: 0,
             review_focus_is_list: true,
+            config,
+            history,
         }
     }
 
@@ -164,7 +171,7 @@ impl App {
         self.show_help = false;
         self.show_details = false;
 
-        let cats = get_cats();
+        let cats: Vec<_> = get_cats().into_iter().filter(|c| self.config.is_enabled(&c.id)).collect();
         for c in &cats {
             self.scan_progress.push(ScanProgressItem {
                 id: c.id.clone(),
@@ -301,6 +308,11 @@ impl App {
             }
         }
         if let Some(res) = done {
+            // Append history entry
+            let per_category = self.scan_report.as_ref().map(|report| report.results.iter().map(|r| (r.category.id.clone(), r.total_size)).collect()).unwrap_or_default();
+            let entry = HistoryEntry { date: Local::now().format("%Y-%m-%d").to_string(), freed: res.freed, per_category, total_files: res.removed };
+            append_history(&HistoryEntry::history_path(), &entry).ok();
+            self.history.push(entry);
             self.clean_result = Some(res);
             self.clean_rx = None;
             self.screen = Screen::Results;

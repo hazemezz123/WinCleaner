@@ -53,7 +53,12 @@ pub fn clean_selected(
             continue;
         }
 
-        match std::fs::remove_file(&path) {
+        let delete_result = if path.is_dir() {
+            std::fs::remove_dir(&path)
+        } else {
+            std::fs::remove_file(&path)
+        };
+        match delete_result {
             Ok(_) => {
                 removed += 1;
                 freed += size;
@@ -104,8 +109,11 @@ fn is_safe_to_delete(path: &PathBuf) -> bool {
     let lad = std::env::var("LOCALAPPDATA").unwrap_or_default().to_lowercase();
     let temp = std::env::var("TEMP").unwrap_or_default().to_lowercase();
     let tmp = std::env::var("TMP").unwrap_or_default().to_lowercase();
+    let download = dirs::download_dir()
+        .map(|p| p.to_string_lossy().to_lowercase())
+        .unwrap_or_default();
 
-    let safe_prefixes = vec![
+    let mut safe_prefixes = vec![
         lad.clone(),
         temp.clone(),
         tmp.clone(),
@@ -116,6 +124,9 @@ fn is_safe_to_delete(path: &PathBuf) -> bool {
         format!(r"{}\microsoft\windows\inetcache", lad),
         format!(r"{}\microsoft\windows\deliveryoptimization", lad),
     ];
+    if !download.is_empty() {
+        safe_prefixes.push(download.clone());
+    }
 
     for prefix in safe_prefixes {
         if !prefix.is_empty() && path_str.starts_with(&prefix.replace("/", "\\")) {
