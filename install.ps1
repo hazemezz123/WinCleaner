@@ -38,7 +38,7 @@ Keys in TUI:
 $Repo = "hazemezz123/WinCleaner"
 $ExeName = "cleansweep.exe"
 $LocalExe = Join-Path $BinDir $ExeName
-$RootExe  = Join-Path $PSScriptRoot $ExeName
+$RootExe  = if ($PSScriptRoot) { Join-Path $PSScriptRoot $ExeName } else { "" }
 $TempExe  = Join-Path $env:TEMP $ExeName
 
 function Write-Pretty($msg, $color = "DarkGray") {
@@ -57,9 +57,9 @@ function Show-Loading($text) {
 
 # Resolve exe: prefer BinDir > Root > Temp > local cargo build
 $Exe = $null
-$candidates = @($LocalExe, $RootExe, $TempExe, ".\target\release\$ExeName", ".\target\debug\$ExeName")
+$candidates = @($LocalExe, $RootExe, $TempExe, ".\target\release\$ExeName", ".\target\debug\$ExeName") | Where-Object { $_ -and $_ -ne "" }
 foreach ($c in $candidates) {
-    if (Test-Path -LiteralPath $c) { $Exe = (Resolve-Path $c).Path; break }
+    if (Test-Path -LiteralPath $c) { $Exe = (Resolve-Path $c -ErrorAction SilentlyContinue).Path; if ($Exe) { break } }
 }
 
 Show-Loading "Loading CleanSweep..."
