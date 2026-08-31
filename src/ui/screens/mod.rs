@@ -2,11 +2,12 @@ use ratatui::{
     layout::{Alignment, Constraint, Direction, Flex, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span},
-    widgets::{Block, Borders, Clear, Paragraph, Wrap},
+    widgets::{Block, Borders, Clear, Paragraph, Sparkline, Wrap},
     Frame,
 };
 
 use crate::app::{App, DashboardAction, Screen};
+use crate::scanner::history::sparkline_data;
 use crate::scanner::{format_bytes, format_bytes_precise};
 use crate::ui::theme::Theme;
 
@@ -165,6 +166,7 @@ fn draw_footer(frame: &mut Frame, area: Rect, app: &App) {
 
 fn draw_dashboard(frame: &mut Frame, area: Rect, app: &App) {
     let wide = is_wide(area);
+    let data = sparkline_data(&app.history);
 
     if wide {
         let outer = Layout::default()
@@ -173,6 +175,7 @@ fn draw_dashboard(frame: &mut Frame, area: Rect, app: &App) {
             .constraints([
                 Constraint::Length(7), // top row storage + recoverable
                 Constraint::Length(1), // status
+                Constraint::Length(3), // sparkline (Last 7 days)
                 Constraint::Length(7), // primary scan
                 Constraint::Length(1), // quick actions
                 Constraint::Length(1), // tip
@@ -185,14 +188,21 @@ fn draw_dashboard(frame: &mut Frame, area: Rect, app: &App) {
         draw_storage(frame, top[0], app);
         draw_recoverable(frame, top[1], app);
         draw_system_status(frame, outer[1], app);
-        draw_primary_scan(frame, outer[2], app);
-        draw_quick_actions(frame, outer[3], app);
+        if !data.is_empty() {
+            let spark = Sparkline::default()
+                .data(&data)
+                .style(Style::default().fg(Theme::accent()))
+                .block(Block::default().title(" Last 7 days ").borders(Borders::ALL));
+            frame.render_widget(spark, outer[2]);
+        }
+        draw_primary_scan(frame, outer[3], app);
+        draw_quick_actions(frame, outer[4], app);
         let tip = Paragraph::new(Line::from(Span::styled(
             "  Tip: Everything stays on this PC — preview before you clean.  Press ? for help.",
             Style::default().fg(Theme::dim()),
         )))
         .alignment(Alignment::Center);
-        frame.render_widget(tip, outer[4]);
+        frame.render_widget(tip, outer[5]);
     } else {
         let outer = Layout::default()
             .direction(Direction::Vertical)
@@ -201,6 +211,7 @@ fn draw_dashboard(frame: &mut Frame, area: Rect, app: &App) {
                 Constraint::Length(6), // storage
                 Constraint::Length(6), // recoverable
                 Constraint::Length(1), // status
+                Constraint::Length(3), // sparkline
                 Constraint::Length(5), // primary
                 Constraint::Length(1), // quick actions
                 Constraint::Length(1), // tip
@@ -209,14 +220,21 @@ fn draw_dashboard(frame: &mut Frame, area: Rect, app: &App) {
         draw_storage(frame, outer[0], app);
         draw_recoverable(frame, outer[1], app);
         draw_system_status(frame, outer[2], app);
-        draw_primary_scan(frame, outer[3], app);
-        draw_quick_actions(frame, outer[4], app);
+        if !data.is_empty() {
+            let spark = Sparkline::default()
+                .data(&data)
+                .style(Style::default().fg(Theme::accent()))
+                .block(Block::default().title(" Last 7 days ").borders(Borders::ALL));
+            frame.render_widget(spark, outer[3]);
+        }
+        draw_primary_scan(frame, outer[4], app);
+        draw_quick_actions(frame, outer[5], app);
         let tip = Paragraph::new(Line::from(Span::styled(
             "  Preview before you clean — press ? for help.",
             Style::default().fg(Theme::dim()),
         )))
         .alignment(Alignment::Center);
-        frame.render_widget(tip, outer[5]);
+        frame.render_widget(tip, outer[6]);
     }
 }
 
