@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="Cleaner-logo.png" alt="WinCleaner Logo" width="220" />
+</p>
+
 # ◈ WinCleaner — CleanSweep
 
 > **A modern, lightweight disk-cleaning app that happens to live in the terminal.**
