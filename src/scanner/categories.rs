@@ -150,6 +150,34 @@ pub fn get_categories() -> Vec<Category> {
         Duration::from_secs(7 * 24 * 3600),
     ));
 
+    cats.push(Category::new(
+        "downloads",
+        "Downloads",
+        '⬇',
+        "Old downloads >30d",
+        vec![dirs::download_dir().unwrap_or(PathBuf::from(r"C:\Users\Default\Downloads"))],
+        vec![],
+        Duration::from_secs(30 * 24 * 3600),
+    ));
+    cats.push(Category::new(
+        "large_files",
+        "Large Files",
+        '⬢',
+        "Files >500MB anywhere in temp/docs",
+        temp_paths(),
+        vec![],
+        Duration::from_secs(0),
+    ));
+    cats.push(Category::new(
+        "empty_folders",
+        "Empty Folders",
+        '∅',
+        "Empty directories in temp",
+        temp_paths(),
+        vec![],
+        Duration::from_secs(0),
+    ));
+
     // Filter to only categories that have at least one existing path
     // But keep them all for UI; scanner will skip missing paths gracefully
     cats

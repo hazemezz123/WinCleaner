@@ -58,6 +58,12 @@ pub enum ScanEvent {
 }
 
 fn should_include(path: &PathBuf, metadata: &std::fs::Metadata, category: &Category) -> bool {
+    if category.id == "large_files" {
+        return metadata.len() > 500 * 1024 * 1024;
+    }
+    if category.id == "empty_folders" {
+        return false;
+    }
     // Check pattern
     if !matches_pattern(path, &category.patterns) {
         return false;
@@ -85,6 +91,77 @@ fn scan_category(category: &Category, sender: Option<&Sender<ScanEvent>>) -> Cat
         let _ = s.send(ScanEvent::Started {
             category: category.id.clone(),
         });
+    }
+
+    if category.id == "empty_folders" {
+        for base in &category.paths {
+            if !base.exists() {
+                continue;
+            }
+            let walk = WalkDir::new(base)
+                .follow_links(false)
+                .max_depth(8)
+                .into_iter()
+                .filter_entry(|e| {
+                    let ft = e.file_type();
+                    if ft.is_symlink() {
+                        return false;
+                    }
+                    true
+                });
+            let mut local_count = 0usize;
+            for entry in walk.filter_map(|e| e.ok()) {
+                if !entry.file_type().is_dir() {
+                    continue;
+                }
+                let path = entry.path().to_path_buf();
+                let is_empty = match std::fs::read_dir(&path) {
+                    Ok(mut iter) => iter.next().is_none(),
+                    Err(_) => false,
+                };
+                if !is_empty {
+                    continue;
+                }
+                if category.min_age > Duration::from_secs(0) {
+                    if let Ok(metadata) = std::fs::metadata(&path) {
+                        if let Ok(modified) = metadata.modified() {
+                            if let Ok(age) = SystemTime::now().duration_since(modified) {
+                                if age < category.min_age {
+                                    continue;
+                                }
+                            }
+                        }
+                    }
+                }
+                files.push(FileItem {
+                    path: path.clone(),
+                    size: 0,
+                    category_id: category.id.clone(),
+                });
+                local_count += 1;
+                if local_count % 500 == 0 {
+                    if let Some(s) = sender {
+                        let _ = s.send(ScanEvent::Progress {
+                            category: category.id.clone(),
+                            files: files.len(),
+                            size: total_size,
+                        });
+                    }
+                }
+                if files.len() > 100_000 {
+                    break;
+                }
+            }
+        }
+        let result = CategoryResult {
+            category: category.clone(),
+            files,
+            total_size,
+        };
+        if let Some(s) = sender {
+            let _ = s.send(ScanEvent::CategoryDone(result.clone()));
+        }
+        return result;
     }
 
     for base in &category.paths {
