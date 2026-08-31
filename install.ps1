@@ -2,9 +2,9 @@
 .SYNOPSIS
     CleanSweep - One-line loader for Windows
 .DESCRIPTION
-    Downloads (if needed) and launches the CleanSweep TUI.
+    Downloads (if needed) and launches the WinCleaner (CleanSweep) TUI.
     Usage:
-        irm https://raw.githubusercontent.com/you/cleansweep/main/install.ps1 | iex
+        irm https://raw.githubusercontent.com/hazemezz123/WinCleaner/main/install.ps1 | iex
         # or locally:
         powershell -ExecutionPolicy Bypass -File install.ps1
 .NOTES
@@ -35,7 +35,7 @@ Keys in TUI:
     exit 0
 }
 
-$Repo = "you/cleansweep"
+$Repo = "hazemezz123/WinCleaner"
 $ExeName = "cleansweep.exe"
 $LocalExe = Join-Path $BinDir $ExeName
 $RootExe  = Join-Path $PSScriptRoot $ExeName
